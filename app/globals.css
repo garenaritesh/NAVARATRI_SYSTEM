@@ -24,3 +24,80 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+@media print {
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+
+  html,
+  body {
+    background: white !important;
+  }
+
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .report-actions {
+    display: none !important;
+  }
+
+  .report-paper {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    ring: none !important;
+  }
+
+  .report-paper header {
+    padding-top: 18px !important;
+    padding-bottom: 22px !important;
+  }
+
+  .report-paper h1 {
+    font-size: 24px !important;
+  }
+
+  .report-paper section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .report-paper table {
+    width: 100% !important;
+    break-inside: auto;
+  }
+
+  .report-paper tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .report-paper thead {
+    display: table-header-group;
+  }
+
+  .report-paper tfoot {
+    display: table-footer-group;
+  }
+
+  .report-paper .shadow-sm,
+  .report-paper .shadow-xl,
+  .report-paper .shadow-2xl {
+    box-shadow: none !important;
+  }
+
+  .report-paper .ring-1 {
+    box-shadow: none !important;
+  }
+
+  .report-paper footer {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
