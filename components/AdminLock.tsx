@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type Props = {
     children: React.ReactNode;
@@ -9,12 +9,30 @@ type Props = {
 export default function AdminLock({ children }: Props) {
     const [pin, setPin] = useState("");
     const [unlocked, setUnlocked] = useState(false);
+    const [checking, setChecking] = useState(true);
     const [error, setError] = useState("");
+
+    useEffect(() => {
+        const savedAccess = localStorage.getItem(
+            "sumandham_admin_access"
+        );
+
+        if (savedAccess === "true") {
+            setUnlocked(true);
+        }
+
+        setChecking(false);
+    }, []);
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
 
         if (pin === "1818") {
+            localStorage.setItem(
+                "sumandham_admin_access",
+                "true"
+            );
+
             setUnlocked(true);
             setError("");
         } else {
@@ -23,6 +41,18 @@ export default function AdminLock({ children }: Props) {
         }
     }
 
+    // Browser localStorage check hone tak
+    if (checking) {
+        return (
+            <main className="flex min-h-screen items-center justify-center bg-slate-950">
+                <div className="text-sm font-medium text-white">
+                    Loading...
+                </div>
+            </main>
+        );
+    }
+
+    // Already verified
     if (unlocked) {
         return <>{children}</>;
     }
@@ -32,6 +62,7 @@ export default function AdminLock({ children }: Props) {
             <div className="w-full max-w-sm rounded-3xl bg-white p-7 shadow-2xl">
 
                 <div className="mb-6 text-center">
+
                     <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-900 text-2xl font-black text-white">
                         SN
                     </div>
@@ -43,6 +74,7 @@ export default function AdminLock({ children }: Props) {
                     <p className="mt-2 text-sm text-slate-500">
                         Enter admin PIN to continue
                     </p>
+
                 </div>
 
                 <form onSubmit={handleSubmit}>
@@ -55,6 +87,7 @@ export default function AdminLock({ children }: Props) {
                         value={pin}
                         onChange={(e) => {
                             const value = e.target.value.replace(/\D/g, "");
+
                             setPin(value);
                             setError("");
                         }}
