@@ -24,7 +24,7 @@ export default function FundCollection({
     const [mounted, setMounted] = useState(false);
 
     // Apni actual UPI ID yaha rakho
-    const upiId = "YOUR-UPI-ID@upi";
+    const upiId = "rkthakre554@oksbi";
 
     useEffect(() => {
         setMounted(true);
