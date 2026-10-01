@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { sql } from "@/lib/db";
 
+
 export default async function Home() {
   // ========================================
   // BUILDING TOTALS
