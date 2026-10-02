@@ -47,7 +47,7 @@ export async function PATCH(request: Request) {
     try {
         const body = await request.json();
 
-        if (body.pin !== "1818") {
+        if (body.password !== "2007") {
             return NextResponse.json(
                 { error: "Unauthorized." },
                 { status: 401 }
@@ -73,10 +73,7 @@ export async function PATCH(request: Request) {
             );
         }
 
-        if (
-            paymentMode !== "cash" &&
-            paymentMode !== "online"
-        ) {
+        if (paymentMode !== "cash" && paymentMode !== "online") {
             return NextResponse.json(
                 { error: "Invalid payment mode." },
                 { status: 400 }
@@ -115,6 +112,53 @@ export async function PATCH(request: Request) {
 
         return NextResponse.json(
             { error: "Failed to update fund." },
+            { status: 500 }
+        );
+    }
+}
+
+export async function DELETE(request: Request) {
+    try {
+        const body = await request.json();
+
+        if (body.password !== "2007") {
+            return NextResponse.json(
+                { error: "Unauthorized." },
+                { status: 401 }
+            );
+        }
+
+        const id = Number(body.id);
+
+        if (!Number.isInteger(id) || id <= 0) {
+            return NextResponse.json(
+                { error: "Invalid fund ID." },
+                { status: 400 }
+            );
+        }
+
+        const result = await sql`
+      DELETE FROM funds
+      WHERE id = ${id}
+      RETURNING id;
+    `;
+
+        if (result.length === 0) {
+            return NextResponse.json(
+                { error: "Fund record not found." },
+                { status: 404 }
+            );
+        }
+
+        return NextResponse.json({
+            success: true,
+            message: "Fund record deleted successfully.",
+        });
+    } catch (error) {
+        console.error("FUND DELETE ERROR:", error);
+
+        return NextResponse.json(
+            { error: "Failed to delete fund record." },
             { status: 500 }
         );
     }

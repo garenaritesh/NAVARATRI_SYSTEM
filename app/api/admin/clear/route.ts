@@ -5,7 +5,7 @@ export async function POST(request: Request) {
     try {
         const body = await request.json();
 
-        if (body.pin !== "1818") {
+        if (body.password !== "2007") {
             return NextResponse.json(
                 { error: "Unauthorized." },
                 { status: 401 }
@@ -16,6 +16,7 @@ export async function POST(request: Request) {
 
         try {
             await sql`DELETE FROM funds`;
+
             await sql`DELETE FROM expenses`;
 
             await sql`
