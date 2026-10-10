@@ -398,22 +398,22 @@ export default async function ReportPage() {
 
                                             <tr
                                                 key={String(building.name)}
-                                                className="border-b border-slate-100 last:border-0"
+                                                className="border-b border-gray-100 last:border-0"
                                             >
 
                                                 <td className="px-5 py-4 font-bold text-slate-900">
                                                     Building {building.name}
                                                 </td>
 
-                                                <td className="px-5 py-4 font-bold">
+                                                <td className="px-5 py-4 font-bold text-slate-900">
                                                     {money(building.total_fund)}
                                                 </td>
 
-                                                <td className="px-5 py-4">
+                                                <td className="px-5 py-4 text-slate-900">
                                                     {money(building.online_fund)}
                                                 </td>
 
-                                                <td className="px-5 py-4">
+                                                <td className="px-5 py-4 text-slate-900">
                                                     {money(building.cash_fund)}
                                                 </td>
 
@@ -483,7 +483,7 @@ export default async function ReportPage() {
                                                     {expense.title}
                                                 </td>
 
-                                                <td className="px-5 py-4 text-slate-500">
+                                                <td className="px-5 py-4 text-slate-900">
                                                     {new Date(
                                                         String(expense.spent_at)
                                                     ).toLocaleDateString(
@@ -496,7 +496,7 @@ export default async function ReportPage() {
                                                     )}
                                                 </td>
 
-                                                <td className="px-5 py-4 text-right font-bold">
+                                                <td className="px-5 py-4 text-right font-bold text-slate-900">
                                                     {money(expense.amount)}
                                                 </td>
 

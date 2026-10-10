@@ -1,3 +1,4 @@
+import BuildingReportButton from "@/components/BuildingReportButton";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { sql } from "@/lib/db";
@@ -88,6 +89,36 @@ export default async function BuildingPage({ params }: Props) {
 
     WHERE f.building_id = ${currentBuilding.id};
   `;
+
+    const flatReportData = await sql`
+  SELECT
+    f.flat_number,
+    f.is_closed,
+    fl.floor_number,
+    COALESCE(
+      SUM(
+        CASE
+          WHEN f.is_closed = FALSE THEN fd.amount
+          ELSE 0
+        END
+      ),
+      0
+    ) AS total_paid
+  FROM flats f
+  INNER JOIN floors fl
+    ON fl.id = f.floor_id
+  LEFT JOIN funds fd
+    ON fd.flat_id = f.id
+  WHERE f.building_id = ${currentBuilding.id}
+  GROUP BY
+    f.id,
+    f.flat_number,
+    f.is_closed,
+    fl.floor_number
+  ORDER BY
+    fl.floor_number,
+    f.flat_number;
+`;
 
     // --------------------------------------------------
     // FLOOR DATA
@@ -221,10 +252,22 @@ export default async function BuildingPage({ params }: Props) {
                         </p>
                     </div>
 
-                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-purple-100 text-3xl font-bold text-purple-700">
-                        {buildingName}
-                    </div>
+                    <div className="flex flex-col items-end gap-3 sm:flex-row sm:items-center">
+                        <BuildingReportButton
+                            building={buildingName}
+                            totalFund={totalFund}
+                            flats={flatReportData.map((flat) => ({
+                                flatNumber: String(flat.flat_number),
+                                floorNumber: Number(flat.floor_number),
+                                isClosed: flat.is_closed,
+                                amount: Number(flat.total_paid),
+                            }))}
+                        />
 
+                        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-purple-100 text-3xl font-bold text-purple-700">
+                            {buildingName}
+                        </div>
+                    </div>
                 </div>
 
                 {/* Building Summary */}

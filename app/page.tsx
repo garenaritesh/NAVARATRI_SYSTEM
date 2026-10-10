@@ -236,15 +236,15 @@ export default async function Home() {
               </p>
             </Link>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <Link href="reports" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <h3 className="font-semibold text-slate-900">
                 View Reports
               </h3>
 
               <p className="mt-1 text-sm text-slate-500">
-                Coming next
+                View fund collection and expense reports
               </p>
-            </div>
+            </Link>
 
           </div>
 
