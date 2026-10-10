@@ -3,6 +3,8 @@ import Link from "next/link";
 import ExpenseForm from "@/components/ExpenseForm";
 import ExpenseHistory from "@/components/ExpenseHistory";
 
+export const dynamic = "force-dynamic";
+
 export default async function ExpensesPage() {
     const expenses = await sql`
     SELECT
