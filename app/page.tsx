@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import { sql } from "@/lib/db";
 
@@ -12,8 +13,75 @@ export default async function Home() {
     SELECT
       b.id,
       b.name,
-      COUNT(DISTINCT f.id)::int AS flats,
 
+      COUNT(
+        DISTINCT CASE
+          WHEN f.is_closed = FALSE THEN f.id
+        END
+      )::int AS flats,
+
+      COUNT(
+        DISTINCT CASE
+          WHEN f.is_closed = FALSE
+            AND fd.id IS NULL
+          THEN f.id
+        END
+      )::int AS pending_flats,
+
+      COALESCE(
+        SUM(
+          CASE
+            WHEN f.is_closed = FALSE THEN fd.amount
+            ELSE 0
+          END
+        ),
+        0
+      ) AS total_fund,
+
+      COALESCE(
+        SUM(
+          CASE
+            WHEN f.is_closed = FALSE
+              AND fd.payment_mode = 'online'
+            THEN fd.amount
+            ELSE 0
+          END
+        ),
+        0
+      ) AS online,
+
+      COALESCE(
+        SUM(
+          CASE
+            WHEN f.is_closed = FALSE
+              AND fd.payment_mode = 'cash'
+            THEN fd.amount
+            ELSE 0
+          END
+        ),
+        0
+      ) AS cash
+
+    FROM buildings b
+
+    LEFT JOIN flats f
+      ON f.building_id = b.id
+
+    LEFT JOIN funds fd
+      ON fd.flat_id = f.id
+
+    GROUP BY b.id, b.name
+
+    ORDER BY b.name;
+  `;
+
+  // ========================================
+  // OVERALL FUND
+  // Exclude funds from closed flats
+  // ========================================
+
+  const fundTotals = await sql`
+    SELECT
       COALESCE(SUM(fd.amount), 0) AS total_fund,
 
       COALESCE(
@@ -38,50 +106,12 @@ export default async function Home() {
         0
       ) AS cash
 
-    FROM buildings b
+    FROM funds fd
 
-    LEFT JOIN flats f
-      ON f.building_id = b.id
+    INNER JOIN flats f
+      ON f.id = fd.flat_id
 
-    LEFT JOIN funds fd
-      ON fd.flat_id = f.id
-
-    GROUP BY b.id, b.name
-
-    ORDER BY b.name;
-  `;
-
-  // ========================================
-  // OVERALL FUND
-  // ========================================
-
-  const fundTotals = await sql`
-    SELECT
-      COALESCE(SUM(amount), 0) AS total_fund,
-
-      COALESCE(
-        SUM(
-          CASE
-            WHEN payment_mode = 'online'
-            THEN amount
-            ELSE 0
-          END
-        ),
-        0
-      ) AS online,
-
-      COALESCE(
-        SUM(
-          CASE
-            WHEN payment_mode = 'cash'
-            THEN amount
-            ELSE 0
-          END
-        ),
-        0
-      ) AS cash
-
-    FROM funds;
+    WHERE f.is_closed = FALSE;
   `;
 
   // ========================================
@@ -117,8 +147,8 @@ export default async function Home() {
       <div className="mx-auto max-w-7xl">
 
         {/* HEADER */}
-        <div className="mb-8">
 
+        <div className="mb-8">
           <p className="text-sm font-semibold tracking-wide text-purple-600">
             NAVRATRI MANAGEMENT
           </p>
@@ -130,12 +160,11 @@ export default async function Home() {
           <p className="mt-2 text-slate-500">
             Navratri Fund & Expense Management
           </p>
-
         </div>
 
         {/* OVERALL STATS */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             title="Total Fund Received"
             value={totalFund}
@@ -155,12 +184,11 @@ export default async function Home() {
             title="Total Expenses"
             value={totalExpenses}
           />
-
         </div>
 
         {/* BALANCE */}
-        <div className="mt-4 rounded-2xl bg-purple-600 p-6 text-white shadow-sm">
 
+        <div className="mt-4 rounded-2xl bg-purple-600 p-6 text-white shadow-sm">
           <p className="text-sm text-purple-100">
             Available Balance
           </p>
@@ -168,12 +196,11 @@ export default async function Home() {
           <h2 className="mt-1 text-3xl font-bold">
             ₹{balance.toLocaleString("en-IN")}
           </h2>
-
         </div>
 
         {/* BUILDINGS */}
-        <div className="mt-10">
 
+        <div className="mt-10">
           <div className="mb-5">
             <h2 className="text-2xl font-bold text-slate-900">
               Buildings
@@ -185,31 +212,28 @@ export default async function Home() {
           </div>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-
             {buildingData.map((building) => (
               <BuildingCard
                 key={building.id}
                 name={building.name}
-                flats={building.flats}
+                flats={Number(building.flats)}
+                pendingFlats={Number(building.pending_flats)}
                 fund={Number(building.total_fund)}
                 online={Number(building.online)}
                 cash={Number(building.cash)}
               />
             ))}
-
           </div>
-
         </div>
 
         {/* QUICK ACTIONS */}
-        <div className="mt-10">
 
+        <div className="mt-10">
           <h2 className="mb-5 text-2xl font-bold text-slate-900">
             Quick Actions
           </h2>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-
             <Link
               href="/"
               className="rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-md"
@@ -236,7 +260,10 @@ export default async function Home() {
               </p>
             </Link>
 
-            <Link href="reports" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <Link
+              href="/reports"
+              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+            >
               <h3 className="font-semibold text-slate-900">
                 View Reports
               </h3>
@@ -245,9 +272,7 @@ export default async function Home() {
                 View fund collection and expense reports
               </p>
             </Link>
-
           </div>
-
         </div>
 
       </div>
@@ -255,10 +280,9 @@ export default async function Home() {
   );
 }
 
-
-/* ========================================
-   STAT CARD
-======================================== */
+// ========================================
+// STAT CARD
+// ========================================
 
 function StatCard({
   title,
@@ -269,7 +293,6 @@ function StatCard({
 }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-
       <p className="text-sm text-slate-500">
         {title}
       </p>
@@ -277,25 +300,25 @@ function StatCard({
       <h3 className="mt-2 text-2xl font-bold text-slate-900">
         ₹{value.toLocaleString("en-IN")}
       </h3>
-
     </div>
   );
 }
 
-
-/* ========================================
-   BUILDING CARD
-======================================== */
+// ========================================
+// BUILDING CARD
+// ========================================
 
 function BuildingCard({
   name,
   flats,
+  pendingFlats,
   fund,
   online,
   cash,
 }: {
   name: string;
   flats: number;
+  pendingFlats: number;
   fund: number;
   online: number;
   cash: number;
@@ -304,7 +327,6 @@ function BuildingCard({
     <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
 
       <div className="flex items-center justify-between">
-
         <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-purple-100 text-2xl font-bold text-purple-700">
           {name}
         </div>
@@ -312,15 +334,24 @@ function BuildingCard({
         <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
           {flats} Flats
         </span>
-
       </div>
 
       <h3 className="mt-5 text-xl font-bold text-slate-900">
         Building {name}
       </h3>
 
-      <div className="mt-5 grid grid-cols-3 gap-3">
+      {/* PENDING FLATS */}
 
+      <p className={`mt-2 text-sm font-semibold ${pendingFlats === 0
+          ? "text-green-600"
+          : "text-orange-600"
+        }`}>
+        {pendingFlats === 0
+          ? "All Funds Collected"
+          : `${pendingFlats} Flats Pending`}
+      </p>
+
+      <div className="mt-5 grid grid-cols-3 gap-3">
         <div>
           <p className="text-xs text-slate-500">
             Total Fund
@@ -350,7 +381,6 @@ function BuildingCard({
             ₹{cash.toLocaleString("en-IN")}
           </p>
         </div>
-
       </div>
 
       <Link
